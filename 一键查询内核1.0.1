@@ -1,0 +1,90 @@
+#!/system/bin/sh
+
+# 检查Root权限
+check_root() {
+    if [ "$(id -u)" -ne 0 ]; then
+        echo -e "\033[31;1m[错误]\033[0m 需要Root权限才能运行！"
+        exit 1
+    fi
+}
+
+# 检测Root管理器
+detect_root_manager() {
+    # 检测Magisk
+    if command -v magisk > /dev/null 2>&1; then
+        magisk_version=$(magisk -v 2>/dev/null)
+        if [ -n "$magisk_version" ]; then
+            echo "Magisk $magisk_version"
+            return
+        fi
+    fi
+
+    # 检测KernelSU
+    if command -v ksu > /dev/null 2>&1; then
+        ksu_version=$(ksu --version 2>/dev/null | head -n1)
+        if [ -n "$ksu_version" ]; then
+            echo "KernelSU $ksu_version"
+            return
+        fi
+    fi
+
+    # 检测APatch
+    if command -v apatch > /dev/null 2>&1; then
+        apatch_version=$(apatch --version 2>/dev/null | head -n1)
+        if [ -n "$apatch_version" ]; then
+            echo "APatch $apatch_version"
+            return
+        fi
+    fi
+
+    echo "未检测到常见Root管理器"
+}
+
+# 主程序
+main() {
+    clear
+    check_root
+
+    # 基本信息收集
+    script_path="/storage/emulated/0/模块整合/backup_script202504261629"
+    uptime_info=$(uptime -p)
+    exec_time=$(date +"%Y-%m-%d %H:%M:%S")
+    manager=$(detect_root_manager)
+    brand=$(getprop ro.product.brand)
+    model=$(getprop ro.product.model)
+    flash_part="SKhynix HN8T35DZHKX079 A003(UFS)"
+    cpu=$(if [ -r /proc/cpuinfo ]; then grep'model name' /proc/cpuinfo | head -n1 | cut -d':' -f2; else echo "获取失败"; fi)
+    ram_total=$(awk '/MemTotal/ {printf "%d MB", $2/1024}' /proc/meminfo)
+    android_ver=$(getprop ro.build.version.release)
+    sdk_ver=$(getprop ro.build.version.sdk)
+    kernel=$(uname -r)
+    selinux=$(getenforce)
+    author="By-酷安@一个小白想当机佬"
+    support_link="https://github.com/ruiRun0916/-.sh/tree/main?tab=readme-ov-file"
+
+    # 输出信息
+    echo -e "\033[1;34m----------------------------------------\033[0m"
+    echo -e "\033[1;33m- 脚本路径：\033[0m ${script_path}"
+    echo -e "\033[1;33m- 已开机：\033[0m ${uptime_info}"
+    echo -e "\033[1;33m- 执行时间：\033[0m ${exec_time}"
+    echo -e "\033[1;33m- Root管理器：\033[0m ${manager}"
+    echo -e "\033[1;33m- 品牌：\033[0m ${brand}"
+    echo -e "\033[1;33m- 型号：\033[0m ${model}"
+    echo -e "\033[1;33m- 闪存颗粒：\033[0m ${flash_part}"
+    echo -e "\033[1;33m- 处理器：\033[0m ${cpu}"
+    echo -e "\033[1;33m- RAM：\033[0m ${ram_total}"
+    echo -e "\033[1;33m- Android版本：\033[0m ${android_ver} \033[1;33mSDK：\033[0m ${sdk_ver}"
+    echo -e "\033[1;34m----------------------------------------\033[0m"
+
+    # 核心信息突出显示
+    echo -e "\n\033[1;7;35m  内核版本： ${kernel}  \033[0m"
+
+    echo -e "\n\033[1;34m- Selinux状态：\033[0m ${selinux}"
+    echo -e "\n\033[1;34m- 作者：\033[0m ${author}"
+    echo -e "\n\033[1;34m- 支持：\033[0m ${support_link}"
+
+    # 退出提示
+    read -n 1 -s -r -p $"\n\033[1;32m按任意键退出...\033[0m" 2>/dev/null
+}
+
+main
